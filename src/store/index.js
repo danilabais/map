@@ -1,6 +1,8 @@
 import Vue from 'vue'
 import Vuex from 'vuex'
 
+import { v4 as uuidv4 } from 'uuid';
+
 Vue.use(Vuex)
 import { getRoutes } from "@/api/routesApi";
 
@@ -32,9 +34,11 @@ export default new Vuex.Store({
           name: el.Name,
           countRoutes: el.Stops.length,
           id: el.ID,
+          descr: el.Description,
+          stops: el.Stops,
           points: el.Points?.map(el=>{
             return [el.Lat,el.Lon]
-          })
+          }),
         }
       })
     },
@@ -52,7 +56,7 @@ export default new Vuex.Store({
           if (!stopCount[stop.ID+makeSuffixId(stop)]) {
             stopCount[stop.ID+makeSuffixId(stop)] = {
               id: stop.ID,
-              uniqId: stop.ID+makeSuffixId(stop),
+              uniqId: uuidv4(),
               countStopes: 1,
               name: stop.Name || 'Без названия',
               coords: [stop.Lat, stop.Lon],

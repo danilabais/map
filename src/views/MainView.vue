@@ -18,6 +18,8 @@
         @cell-clicked="onCellClickedRoutes"
         style="width: 100%; height: 100%"
         class="ag-theme-alpine"
+        :allowContextMenuWithControlKey="true"
+        :getContextMenuItems="getContextMenuItems"
         :columnDefs="columnDefsRoutes"
         :rowData="routes"
         v-show="tableState === $options.TABLE_STATES.ROUTES"
@@ -37,34 +39,62 @@
       <l-map
         v-if="true"
         ref="map"
-        :center="center"
+        :zoom="2"
         style="height: 100%; width: 100%"
         @ready="mapReady"
       >
-        <l-tile-layer :url="url" />
-
-        <l-poly-line
-          v-for="route in routes"
-          :key="route.id"
-          :lat-lngs="route.points"
-        >
-          <l-tooltip>{{ route.name }}</l-tooltip>
-        </l-poly-line>
-
-        <l-marker
-          v-for="stop in stops"
-          :key="stop.uniqId"
-          @click="flyToStop(stop.coords)"
-          :lat-lng="stop.coords"
-        >
-          <l-tooltip>{{ stop.name }}</l-tooltip>
-          <l-icon
-            :icon-url="
-              stop.forward ? '/marker-forward.svg' : '/marker-not-forward.svg'
+        <l-control position="bottomleft">
+          <button
+            @click="globalFilter = item"
+            v-for="item in $options.TABLE_STATES"
+          >
+            display only {{ item }}
+          </button>
+          <button
+            @click="
+              globalFilter = null;
+              filterStops = null;
             "
-            :icon-size="[24, 24]"
-          ></l-icon>
-        </l-marker>
+          >
+            Reset filters
+          </button>
+        </l-control>
+        <l-tile-layer :url="url" />
+        <template
+          v-if="globalFilter === $options.TABLE_STATES.ROUTES || !globalFilter"
+        >
+          <l-poly-line
+            v-for="route in routes"
+            :key="route.id"
+            :lat-lngs="route.points"
+          >
+            <l-tooltip>{{ route.name }}</l-tooltip>
+          </l-poly-line>
+        </template>
+
+        <template
+          v-if="globalFilter === $options.TABLE_STATES.STOPS || !globalFilter"
+        >
+          <l-marker
+            v-for="(stop, idx) in filteredStops"
+            :key="stop.uniqId + idx"
+            @click="
+              flyToStop(stop.coords);
+              filterStops = stop.uniqId;
+            "
+            :lat-lng="stop.coords"
+          >
+            <l-tooltip>{{ stop.name }}</l-tooltip>
+            <l-icon
+              :icon-url="
+                stop.forward
+                  ? require('@/assets/icons/marker-forward.svg')
+                  : require('@/assets/icons/marker-not-forward.svg')
+              "
+              :icon-size="[24, 24]"
+            ></l-icon>
+          </l-marker>
+        </template>
       </l-map>
       <pre v-else>{{ JSON.stringify(routes, 0, 2) }}</pre>
     </div>
@@ -75,10 +105,11 @@
 // @ is an alias to /src
 import MainLoader from "@/components/loaders/MainLoader.vue";
 
-import { mapActions, mapGetters } from "vuex";
+import { mapGetters } from "vuex";
 
 import "ag-grid-community/styles/ag-grid.css";
 import "ag-grid-community/styles/ag-theme-alpine.css";
+import "ag-grid-enterprise";
 import { AgGridVue } from "ag-grid-vue";
 
 const TABLE_STATES = {
@@ -93,11 +124,8 @@ export default {
   TABLE_STATES,
   data() {
     return {
-      // icon: icon({
-      //   iconUrl: require("@/assets/icons/marker-forward.svg"),
-      //   iconSize: [32, 37],
-      //   iconAnchor: [16, 37],
-      // }),
+      globalFilter: null,
+      filterStops: null,
 
       zoom: 11,
       center: [47.31322, -1.319482],
@@ -118,19 +146,16 @@ export default {
     this.columnDefsRoutes = [{ field: "name" }, { field: "countRoutes" }];
     this.columnDefsStops = [
       { field: "name" },
-      { field: "forward" },
+      { field: "forward", valueFormatter: this.foramatForward },
       { field: "countStopes" },
     ];
   },
-  async created() {
-    this.fetchRoutes();
-  },
   methods: {
-    onCellClicked(data) {
-      console.log(data);
-    },
     flyToStop(coords, zoom = 15) {
       this.map.flyTo(coords, zoom);
+    },
+    foramatForward({ value }) {
+      return (value ? "Прямое " : "Обратное ") + "направление";
     },
     flyToRoute({ points }) {
       let maxL = 0;
@@ -161,13 +186,11 @@ export default {
       this.map = e;
     },
     onCellClickedRoutes({ data }) {
+      this.filterStops = null;
       if (!data.points) {
         alert("Точки не найдены, см консоль");
         console.error(
-          new Error(
-            JSON.stringify(data) +
-              " не имеет точек, чтобы сфокусироваться на них!"
-          )
+          new Error(data, " не имеет точек, чтобы сфокусироваться на них!")
         );
         return;
       }
@@ -177,16 +200,23 @@ export default {
       if (!data.coords) {
         alert("Остановки не найдены, см консоль");
         console.error(
-          new Error(
-            JSON.stringify(data) +
-              " не имеет точек, чтобы сфокусироваться на них!"
-          )
+          new Error(data, " не имеет точек, чтобы сфокусироваться на них!")
         );
         return;
       }
       this.flyToStop(data.coords);
+      this.filterStops = data.uniqId;
     },
-    ...mapActions(["fetchRoutes"]),
+    getContextMenuItems({ node }) {
+      return [
+        {
+          name: "Открыть маршрут " + node.data.name,
+          action: () => {
+            this.$router.push("/route/" + node.data.id);
+          },
+        },
+      ];
+    },
   },
   computed: {
     ...mapGetters([
@@ -194,6 +224,11 @@ export default {
       "stops",
       // ...
     ]),
+    filteredStops() {
+      if (this.filterStops) {
+        return this.stops.filter((el) => el.uniqId === this.filterStops);
+      } else return this.stops;
+    },
   },
 };
 </script>

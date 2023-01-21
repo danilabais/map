@@ -1,11 +1,19 @@
 <template>
   <div class="wrapper">
-    <router-view :data="data" />
+    <router-view />
   </div>
 </template>
 
 <script>
-export default {};
+import { mapActions } from "vuex";
+export default {
+  methods: {
+    ...mapActions(["fetchRoutes"]),
+  },
+  created() {
+    this.fetchRoutes();
+  },
+};
 </script>
 
 <style scoped>

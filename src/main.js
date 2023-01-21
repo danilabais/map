@@ -6,7 +6,7 @@ import store from './store'
 import 'normalize.css'
 
 
-import { LMap, LTileLayer, LMarker , LIcon, LPolyline, LTooltip} from 'vue2-leaflet';
+import { LMap, LTileLayer, LMarker , LIcon, LPolyline, LTooltip,LControl} from 'vue2-leaflet';
 import 'leaflet/dist/leaflet.css';
 
 Vue.component('l-map', LMap);
@@ -15,6 +15,7 @@ Vue.component('l-marker', LMarker);
 Vue.component('l-icon', LIcon);
 Vue.component('l-poly-line', LPolyline);
 Vue.component('l-tooltip', LTooltip);
+Vue.component('l-control', LControl);
 
 
 Vue.config.productionTip = false
