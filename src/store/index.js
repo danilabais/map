@@ -31,7 +31,10 @@ export default new Vuex.Store({
         return {
           name: el.Name,
           countRoutes: el.Stops.length,
-          id: el.ID
+          id: el.ID,
+          points: el.Points?.map(el=>{
+            return [el.Lat,el.Lon]
+          })
         }
       })
     },
@@ -49,9 +52,11 @@ export default new Vuex.Store({
           if (!stopCount[stop.ID+makeSuffixId(stop)]) {
             stopCount[stop.ID+makeSuffixId(stop)] = {
               id: stop.ID,
+              uniqId: stop.ID+makeSuffixId(stop),
               countStopes: 1,
               name: stop.Name || 'Без названия',
-              forward: (stop.Forward?'Прямое':'Обратное') + ' направление'
+              coords: [stop.Lat, stop.Lon],
+              forward: stop.Forward
             }
           } else if(!uniqStop.includes(stop.ID+makeSuffixId(stop))) {
             stopCount[stop.ID+makeSuffixId(stop)].countStopes++

@@ -33,7 +33,36 @@
       >
       </ag-grid-vue>
     </div>
-    <pre class="map">{{ JSON.stringify(stops, 0, 2) }}</pre>
+    <div class="map">
+      <l-map
+        v-if="true"
+        :zoom="zoom"
+        ref="map"
+        :center="center"
+        style="height: 100%; width: 100%"
+      >
+        <l-tile-layer :url="url" />
+
+        <l-poly-line
+          v-for="route in routes"
+          :key="route.id"
+          :lat-lngs="route.points"
+        />
+
+        <l-marker
+          v-for="stop in stops"
+          :key="stop.uniqId"
+          :lat-lng="stop.coords"
+        >
+          <l-icon
+            :icon-url="
+              stop.forward ? '/marker-forward.svg' : '/marker-not-forward.svg'
+            "
+          ></l-icon>
+        </l-marker>
+      </l-map>
+      <pre v-else>{{ JSON.stringify(routes, 0, 2) }}</pre>
+    </div>
   </div>
 </template>
 
@@ -59,11 +88,21 @@ export default {
   TABLE_STATES,
   data() {
     return {
+      // icon: icon({
+      //   iconUrl: require("@/assets/icons/marker-forward.svg"),
+      //   iconSize: [32, 37],
+      //   iconAnchor: [16, 37],
+      // }),
+
+      zoom: 11,
+      center: [47.31322, -1.319482],
+
       data: null,
       tableState: TABLE_STATES.ROUTES,
       columnDefsRoutes: null,
       columnDefsStops: null,
       rowData: null,
+      url: "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",
     };
   },
   components: {
@@ -131,7 +170,6 @@ export default {
 }
 .map {
   flex: 1 1 auto;
-  background: green;
   overflow: auto;
 }
 </style>
