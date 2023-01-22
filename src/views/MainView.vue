@@ -37,9 +37,9 @@
     </div>
     <div class="map">
       <l-map
-        v-if="true"
         ref="map"
-        :zoom="2"
+        :zoom="$options.LEAFLET_CONFIG.ZOOM"
+        :center="$options.LEAFLET_CONFIG.CENTER"
         style="height: 100%; width: 100%"
         @ready="mapReady"
       >
@@ -47,6 +47,8 @@
           <button
             @click="globalFilter = item"
             v-for="item in $options.TABLE_STATES"
+            :class="{ active: item === globalFilter }"
+            class="change-state"
           >
             display only {{ item }}
           </button>
@@ -54,19 +56,27 @@
             @click="
               globalFilter = null;
               filterStops = null;
+              filterRoutes = null;
             "
           >
-            Reset filters
+            reset all filters
           </button>
         </l-control>
-        <l-tile-layer :url="url" />
+        <l-control position="topright">
+          <button @click="addStop">Добавить остановку</button>
+        </l-control>
+        <l-tile-layer :url="$options.LEAFLET_CONFIG.URL" />
         <template
           v-if="globalFilter === $options.TABLE_STATES.ROUTES || !globalFilter"
         >
           <l-poly-line
-            v-for="route in routes"
+            v-for="route in filteredRoutes"
             :key="route.id"
             :lat-lngs="route.points"
+            @click="
+              flyToRoute(route);
+              filterRoutes = route.id;
+            "
           >
             <l-tooltip>{{ route.name }}</l-tooltip>
           </l-poly-line>
@@ -96,16 +106,17 @@
           </l-marker>
         </template>
       </l-map>
-      <pre v-else>{{ JSON.stringify(routes, 0, 2) }}</pre>
     </div>
+    <AddModal ref="modalAddREF" />
   </div>
 </template>
 
 <script>
 // @ is an alias to /src
-import MainLoader from "@/components/loaders/MainLoader.vue";
+import MainLoader from "@/components/ui/loaders/MainLoader";
+import AddModal from "@/components/main/AddModal.vue";
 
-import { mapGetters } from "vuex";
+import { mapGetters, mapActions } from "vuex";
 
 import "ag-grid-community/styles/ag-grid.css";
 import "ag-grid-community/styles/ag-theme-alpine.css";
@@ -118,39 +129,59 @@ const TABLE_STATES = {
   STOPS: "STOPS",
 };
 
+const LEAFLET_CONFIG = {
+  CENTER: [47.31322, -1.319482],
+  ZOOM: 3,
+  URL: "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",
+};
+
 export default {
   name: "MainView",
-  components: { MainLoader },
+  components: {
+    AgGridVue,
+    MainLoader,
+    AddModal,
+  },
   TABLE_STATES,
+  LEAFLET_CONFIG,
   data() {
     return {
       globalFilter: null,
       filterStops: null,
-
-      zoom: 11,
-      center: [47.31322, -1.319482],
+      filterRoutes: null,
 
       data: null,
       tableState: TABLE_STATES.ROUTES,
       columnDefsRoutes: null,
       columnDefsStops: null,
       rowData: null,
-      url: "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",
       map: null,
     };
   },
-  components: {
-    AgGridVue,
-  },
+
   beforeMount() {
-    this.columnDefsRoutes = [{ field: "name" }, { field: "countRoutes" }];
+    this.columnDefsRoutes = [
+      { field: "name", headerName: "Название" },
+      { field: "countRoutes", headerName: "Количество остановок" },
+    ];
     this.columnDefsStops = [
-      { field: "name" },
-      { field: "forward", valueFormatter: this.foramatForward },
-      { field: "countStopes" },
+      { field: "name", headerName: "Название" },
+      {
+        field: "forward",
+        headerName: "Направление",
+        valueFormatter: this.foramatForward,
+      },
+      { field: "countStopes", headerName: "Количество дорог" },
     ];
   },
+
   methods: {
+    ...mapActions(["addStopToState"]),
+    async addStop() {
+      const response = await this.$refs.modalAddREF.openModal();
+      if (!response) return;
+      this.addStopToState(response);
+    },
     flyToStop(coords, zoom = 15) {
       this.map.flyTo(coords, zoom);
     },
@@ -195,7 +226,9 @@ export default {
         return;
       }
       this.flyToRoute(data);
+      this.filterRoutes = data.id;
     },
+
     onCellClickedStops({ data }) {
       if (!data.coords) {
         alert("Остановки не найдены, см консоль");
@@ -229,6 +262,11 @@ export default {
         return this.stops.filter((el) => el.uniqId === this.filterStops);
       } else return this.stops;
     },
+    filteredRoutes() {
+      if (this.filterRoutes) {
+        return this.routes.filter((el) => el.id === this.filterRoutes);
+      } else return this.routes;
+    },
   },
 };
 </script>
@@ -244,6 +282,12 @@ export default {
   display: flex;
   height: 100%;
   width: 100%;
+}
+.change-state {
+  &.active {
+    background: rgb(107, 107, 107);
+    color: #fff;
+  }
 }
 .sidebar {
   flex: 0 0 33%;

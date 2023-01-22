@@ -20,7 +20,6 @@ export default {
 .wrapper {
   background: #333;
   height: 100vh;
-  max-height: 100vh;
   overflow: hidden;
 }
 </style>

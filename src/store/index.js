@@ -13,7 +13,8 @@ export default new Vuex.Store({
   getters: {
   },
   mutations: {
-    SET_ROUTES:(state,payload)=>state.routes.push(...payload) 
+    SET_ROUTES:(state,payload)=>state.routes.push(...payload),
+    ADD_STOP:(state,payload)=>state.routes.find(route=>route.ID === payload.RouteID).Stops.push(payload)
   },
   actions: {
     async fetchRoutes({commit}) {
@@ -25,8 +26,19 @@ export default new Vuex.Store({
       }
       // console.log(response)
       commit('SET_ROUTES', response)
+    },
+    addStopToState({commit},payload) {
+     const formated = {
+        RouteID: Number(payload.routeId),
+        Forward: payload.forward,
+        Name: payload.name, 
+        Lat: payload.position.lat, 
+        Lon: payload.position.lng
+      }
+      commit('ADD_STOP',formated)
     }
   },
+  
   getters: {
     routes (state) {
       return state.routes.map(el=>{
@@ -59,7 +71,7 @@ export default new Vuex.Store({
               uniqId: uuidv4(),
               countStopes: 1,
               name: stop.Name || 'Без названия',
-              coords: [stop.Lat, stop.Lon],
+              coords: [stop.Forward?stop.Lat+.0001:stop.Lat-.0001, stop.Lon], // тк на остановки находились друг на друге - они перекрывали на карте и нижнее становились некликабельные - решение: сместить на чуть-чуть 
               forward: stop.Forward
             }
           } else if(!uniqStop.includes(stop.ID+makeSuffixId(stop))) {

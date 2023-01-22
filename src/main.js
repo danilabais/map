@@ -4,7 +4,7 @@ import router from './router'
 import store from './store'
 
 import 'normalize.css'
-
+import '@/assets/styles/main.scss'
 
 import { LMap, LTileLayer, LMarker , LIcon, LPolyline, LTooltip,LControl} from 'vue2-leaflet';
 import 'leaflet/dist/leaflet.css';

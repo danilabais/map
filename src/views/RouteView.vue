@@ -22,15 +22,18 @@
       </div>
       <ul class="stops">
         <!-- здесь крайне много методов реализации этого -->
-        <li v-for="item in forwardRoutes" class="stops__text stops__text--blue">
-          {{ item.Name || "Без названия" }}
+        <li
+          v-for="(item, idx) in forwardRoutes"
+          class="stops__text stops__text--blue"
+        >
+          {{ ++idx }}) {{ item.Name || "Без названия" }}
         </li>
 
         <li
-          v-for="item in notForwardRoutes"
+          v-for="(item, idx) in notForwardRoutes"
           class="stops__text stops__text--red"
         >
-          {{ item.Name || "Без названия" }}
+          {{ ++idx }}) {{ item.Name || "Без названия" }}
         </li>
       </ul>
     </div>
@@ -73,18 +76,22 @@ export default {
   color: #ddd;
 }
 .stops {
-  flex: 1 1;
+  flex: 1 1 auto;
   overflow: scroll;
-
   max-height: 100vh;
-  margin: 0;
-  font-size: 3rem;
+  font-size: 2rem;
+  list-style: none;
+  padding-bottom: 10px;
   &__text {
+    padding-bottom: 20px;
+    &:last-child {
+      margin-bottom: 100px;
+    }
     &--blue {
-      color: blue;
+      color: rgb(64, 64, 192);
     }
     &--red {
-      color: red;
+      color: rgb(167, 53, 53);
     }
   }
 }
