@@ -27,7 +27,7 @@ export default new Vuex.Store({
         setTimeout(()=>{
           commit('SET_ROUTES', data)
           commit('ROUTES_LOADING',false)
-        },4000)
+        },0)
       } catch (e) {
         commit('ROUTES_LOADING',false)
       } 

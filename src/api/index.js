@@ -4,7 +4,7 @@ import axios from 'axios'
 
     const MainInstance = axios.create({
     baseURL: 'https://220.transflow.ru/api/public/v1/',
-    timeout: 1000,
+    timeout: 0,
     headers: {
       'Content-Type': 'application/json',
     }

@@ -5,16 +5,16 @@ export const getRoutes = async ()=>{
         const response = await MainInstance.get(
           `/routes_data`
         )
-  
         if (!response.status) {
           throw new Error(response.message)
         }
-
+        
         return {
           data: response.data,
           error: { status: false, message: '' },
         }
       } catch (error) {
+        console.log(error)
         return { data: null, error: { status: true, message: error.message } }
       }
     }
