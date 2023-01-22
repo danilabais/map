@@ -1,5 +1,5 @@
 <template>
-  <div v-if="false" class="loader">
+  <div v-if="isLoadingRoutes" class="loader">
     <MainLoader />
   </div>
   <div v-else class="container">
@@ -18,7 +18,6 @@
         @cell-clicked="onCellClickedRoutes"
         style="width: 100%; height: 100%"
         class="ag-theme-alpine"
-        :allowContextMenuWithControlKey="true"
         :getContextMenuItems="getContextMenuItems"
         :columnDefs="columnDefsRoutes"
         :rowData="routes"
@@ -255,6 +254,7 @@ export default {
     ...mapGetters([
       "routes",
       "stops",
+      "isLoadingRoutes",
       // ...
     ]),
     filteredStops() {

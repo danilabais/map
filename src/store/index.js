@@ -8,24 +8,29 @@ import { getRoutes } from "@/api/routesApi";
 
 export default new Vuex.Store({
   state: {
-    routes: []
-  },
-  getters: {
+    routes: {
+      data: [],
+      isLoading:false,
+      error: null
+    },
   },
   mutations: {
-    SET_ROUTES:(state,payload)=>state.routes.push(...payload),
-    ADD_STOP:(state,payload)=>state.routes.find(route=>route.ID === payload.RouteID).Stops.push(payload)
+    SET_ROUTES:(state,payload)=>state.routes.data.push(...payload),
+    ROUTES_LOADING:(state,payload)=>state.routes.isLoading = payload,
+    ADD_STOP:(state,payload)=>state.routes.data.find(route=>route.ID === payload.RouteID).Stops.push(payload)
   },
   actions: {
     async fetchRoutes({commit}) {
-      let response
+      commit('ROUTES_LOADING',true) // я не уверен, делают ли так во VUEX, но в pinia мы так делали
       try {
-        response = (await getRoutes())
-      } catch (error) {
-        console.log(error)
-      }
-      // console.log(response)
-      commit('SET_ROUTES', response)
+        const {data,error} = await getRoutes()
+        setTimeout(()=>{
+          commit('SET_ROUTES', data)
+          commit('ROUTES_LOADING',false)
+        },4000)
+      } catch (e) {
+        commit('ROUTES_LOADING',false)
+      } 
     },
     addStopToState({commit},payload) {
      const formated = {
@@ -33,7 +38,8 @@ export default new Vuex.Store({
         Forward: payload.forward,
         Name: payload.name, 
         Lat: payload.position.lat, 
-        Lon: payload.position.lng
+        Lon: payload.position.lng,
+        ID: uuidv4(),
       }
       commit('ADD_STOP',formated)
     }
@@ -41,7 +47,7 @@ export default new Vuex.Store({
   
   getters: {
     routes (state) {
-      return state.routes.map(el=>{
+      return state.routes.data.map(el=>{
         return {
           name: el.Name,
           countRoutes: el.Stops.length,
@@ -54,15 +60,17 @@ export default new Vuex.Store({
         }
       })
     },
+    isLoadingRoutes (state) {
+      return state.routes.isLoading
+    },
     stops (state) {
-
       const stopCount = {};
 
       // в полученных данных у остановок айди остановки в одно направление и в другое - совпадает.
       // на мой взгяд это не удобно, поэтому я переформирую айдишник добавляя +1 или -,
       const makeSuffixId =({Forward})=>'-'+String(Number(Forward))
 
-      state.routes.forEach(route => {
+      state.routes.data.forEach(route => {
       const uniqStop = [] // Учел чтобы маршруты были уникальные
       route.Stops.forEach(stop => {
           if (!stopCount[stop.ID+makeSuffixId(stop)]) {

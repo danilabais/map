@@ -8,7 +8,7 @@
           :center="stop.position"
           style="height: 200px; width: 100%"
         >
-          <l-tile-layer :url="url" />
+          <l-tile-layer :url="$options.LEAFLET_CONFIG.URL" />
           <l-marker :draggable="true" :lat-lng.sync="stop.position">
             <l-icon
               :icon-url="
@@ -75,13 +75,17 @@ const ERRORS = {
 };
 let popupController = null;
 import { mapGetters } from "vuex";
+
+const LEAFLET_CONFIG = {
+  URL: "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",
+};
 export default {
   name: "AddModal",
   popupController,
   ERRORS,
+  LEAFLET_CONFIG,
   data() {
     return {
-      url: "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",
       isActive: false,
       stop: {
         position: { lng: 30.315227508544925, lat: 59.94907936115716 },

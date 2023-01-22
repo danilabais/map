@@ -1,6 +1,7 @@
 <template>
-  <div class="container">
-    <header>
+  <div class="wrapper-loader" v-if="isLoadingRoutes"><MainLoader /></div>
+  <div class="container" v-else>
+    <header class="header">
       <button @click="$router.back()">Вернуться назад</button>
     </header>
     <div class="inner">
@@ -41,13 +42,15 @@
 </template>
 
 <script>
+import MainLoader from "@/components/ui/loaders/MainLoader";
 import { mapGetters } from "vuex";
 export default {
+  components: { MainLoader },
   created() {
     console.log(this.$route.params.id);
   },
   computed: {
-    ...mapGetters(["routes"]),
+    ...mapGetters(["routes", "isLoadingRoutes"]),
     findedRoute() {
       return this.routes.find((el) => el.id == Number(this.$route.params.id));
     },
@@ -62,6 +65,15 @@ export default {
 </script>
 
 <style lang="scss" scoped>
+.header {
+  margin-top: 20px;
+}
+.wrapper-loader {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+}
 .container {
   max-width: 1200px;
   padding: 0 20px;

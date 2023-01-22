@@ -5,7 +5,17 @@ import axios from 'axios'
     const MainInstance = axios.create({
     baseURL: 'https://220.transflow.ru/api/public/v1/',
     timeout: 1000,
-    headers: {}
+    headers: {
+      'Content-Type': 'application/json',
+    }
+  });
+
+  MainInstance.interceptors.request.use((config)=> {
+    config.params={
+      //env
+      key: '012345678abc'
+    }
+    return config
   });
 
 export {MainInstance}
